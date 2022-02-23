@@ -1,8 +1,10 @@
 ---
 title: "Lake Water Quality Analysis"
-author: "Matthew Ross"
-date: "9/17/2019"
-output: html_document
+author: "Anna Marshall"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 
@@ -125,9 +127,16 @@ sites with at least 200 observations?
 
 - Here, I just want a plot of chla vs secchi for all sites 
 
-```{r}
-#Your code here
+Lower the secchi depth the clearer the water. Larger numbers are clearer water
+Higher chloraphyll means more algae
+Relationshop between two- more chloraphyll is less secchi depth (less overall water quality)
 
+```{r}
+mean_spatial %>%
+ggplot(aes(x=mean_secchi,y=mean_chl))+
+  geom_point()+
+  labs(title="Mean Secchi vs. Chloraphyll at Sites With >200 Observations)",x="Mean Secchi",y="Mean Chloraphyll")+
+  ggthemes::theme_few()
 ```
 
 
@@ -140,8 +149,22 @@ sites with at least 200 observations?
 number of counts per site.
 
 ```{r}
+site_counts2 <- lake_centers %>%
+  group_by(lagoslakeid) %>%
+  mutate(count = n()) %>%
+  select(lagoslakeid,nhd_long,nhd_lat, count, state_zoneid)
 
-## Your code here
+states_lagos <- lagos$state %>%
+  select(-state_pct_in_nwi, -state_ha_in_nwi,-state_ha)
+
+stateid_counts2 <- inner_join(site_counts2, states_lagos, by="state_zoneid")
+
+state_sums2 <- stateid_counts2 %>%
+  group_by(state_name) %>%
+  summarize(sum_counts = sum(count))
+states <- us_states()
+states_join2 <- inner_join(states,state_sums2,by='state_name') %>% 
+  arrange(desc(sum_counts))
 ```
 
 
@@ -149,23 +172,25 @@ number of counts per site.
 data. 
 
 ```{r}
-## Your code here
+mapview(states_join2, zcol='sum_counts')
 ```
 
 
 ### 2c) Then you will want to group by state and sum all the observations in that
-state and arrange that data from most to least toatl observations per state. 
+state and arrange that data from most to least total observations per state. 
 
 ```{r}
-## Your code here. 
+states_join2 <- inner_join(states,state_sums2,by='state_name') %>% 
+  arrange(desc(sum_counts))
+state_count_table<-tibble(states_join2)
+state_count_table %>% select(state_name,sum_counts)
 ```
 
 ##3 Is there a spatial pattern in Secchi disk depth for lakes with at least 200 
 observations?
 
 ```{r}
-## Your code here
-
+mapview(mean_spatial,zcol='mean_secchi')
 ```
 
 
