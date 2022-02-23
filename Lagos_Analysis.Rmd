@@ -1,0 +1,16 @@
+---
+title: "Lagos_Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cars}
+install.packages(c("RApiSerialize", "LAGOSNE", 'USAboundaries'))
+LAGOSNE::lagosne_get(dest_folder = LAGOSNE:::lagos_path())
+```
+
