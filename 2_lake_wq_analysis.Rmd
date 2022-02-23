@@ -1,12 +1,13 @@
 ---
-title: "Lake Water Quality Analysis"
+title: "LAGOS Spatial Analysis"
 author: "Anna Marshall"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
   html_document:
     toc: true
     toc_float: true
----
 
+---
 
 
 ```{r setup, include=FALSE}
@@ -17,16 +18,17 @@ library(LAGOSNE) #Lots and lots of clean lake data
 library(USAboundaries) #USA states and counties
 library(lubridate) #For dealing with date and time
 ```
+# Overview
+As mentioned in part 1, LAGOS is a multi-scaled geospatial and temporal database of lake ecological context and water quality for thousands of US lakes. LAGOS-NE contains data for 51,101 lakes and reservoirs larger than 4 ha in 17 lake-rich US states. The database includes 3 data modules for: lake location and physical characteristics, ecological context, and in situ measurements of lake water quality. This database is one of the largest and most comprehensive databases of its type because it includes both in situ measurements and ecological context data. You can use the link to learn more about LAGOS. (https://lagoslakes.org/) 
 
+# Methods
+In this part of the assignment, we're diving one step deeper into the LAGOS data and are looking at the in site measurements of lake water quality. We will use secchi disk and chlorophyll data for analyses. 
 
-# LAGOS Analysis
+# Analysis
 
-
+```{r data-read, include=FALSE}
 ## Loading in data
-
-
 ### First download and then specifically grab the locus (or site lat longs)
-```{r data-read}
 #Lagos download script
 #lagosne_get(dest_folder = LAGOSNE:::lagos_path(),overwrite=T)
 
@@ -48,10 +50,10 @@ nutr <- lagos$epi_nutr
 #names(nutr)
 ```
 
+
+
+```{r, include=FALSE}
 ### Subset columns nutr to only keep key info that we want
-
-
-```{r}
 clarity_only <- nutr %>%
   select(lagoslakeid,sampledate,chla,doc,secchi) %>%
   mutate(sampledate = as.character(sampledate) %>% ymd(.))
@@ -59,10 +61,8 @@ clarity_only <- nutr %>%
 ```
 
 
+```{r, include=FALSE}
 ### Keep sites with at least 200 observations 
-
-```{r}
-
 #Look at the number of rows of dataset
 #nrow(clarity_only)
 
@@ -84,9 +84,9 @@ chla_secchi_200 <- chla_secchi %>%
 ```
 
 
-### Join water quality data to spatial data
 
-```{r}
+```{r, include=FALSE}
+### Join water quality data to spatial data
 spatial_200 <- inner_join(spatial_lakes,chla_secchi_200 %>%
                             distinct(lagoslakeid,.keep_all=T),
                           by='lagoslakeid')
@@ -94,11 +94,11 @@ spatial_200 <- inner_join(spatial_lakes,chla_secchi_200 %>%
 
 ```
 
-### Mean Chl_a map
 
-```{r}
+
+```{r, include=FALSE}
 ### Take the mean chl_a and secchi by lake
-
+### Mean Chl_a map
 mean_values_200 <- chla_secchi_200 %>%
   # Take summary by lake id
   group_by(lagoslakeid) %>%
@@ -120,16 +120,10 @@ mapview(mean_spatial,zcol='log10_mean_chl')
 ```
 
 
-# Class work
+## 1) What is the correlation between Secchi Disk Depth and Chlorophyll a for sites with at least 200 observations?
 
-## 1) What is the correlation between Secchi Disk Depth and Chlorophyll a for
-sites with at least 200 observations?
+Lower secchi disk depths (and larger values) correspond with clearer water. On the flip side, higher chlorophyll values suggest more algae present and thus less clear water. In the sites with at least 200 observations, we see more chlorophyll is associated with a lower secchi disk depth. The two are correlated with overall water quality (high chlorophyll and low secchi = poor water quality)
 
-- Here, I just want a plot of chla vs secchi for all sites 
-
-Lower the secchi depth the clearer the water. Larger numbers are clearer water
-Higher chloraphyll means more algae
-Relationshop between two- more chloraphyll is less secchi depth (less overall water quality)
 
 ```{r}
 mean_spatial %>%
@@ -139,11 +133,9 @@ ggplot(aes(x=mean_secchi,y=mean_chl))+
   ggthemes::theme_few()
 ```
 
-
-## Why might this be the case? 
-
-
 ## 2) What states have the most data? 
+
+Minnesota has the most data followed by Michigan. Rhode Island has the least amount of available data. 
 
 ### 2a) First you will need to make a lagos spatial dataset that has the total 
 number of counts per site.
@@ -186,8 +178,10 @@ state_count_table<-tibble(states_join2)
 state_count_table %>% select(state_name,sum_counts)
 ```
 
-##3 Is there a spatial pattern in Secchi disk depth for lakes with at least 200 
+## 3) Is there a spatial pattern in Secchi disk depth for lakes with at least 200 
 observations?
+
+The places with the most and least lake data had high concentrations of low depths. I see what appears to be greater secchi disk depths in larger lakes, but that pattern is strictly visual. There does not appear to be a spatial pattern in geographic location of the lakes other than the lakes in New England appear to be slightly clearer based on the secchi depth. 
 
 ```{r}
 mapview(mean_spatial,zcol='mean_secchi')
